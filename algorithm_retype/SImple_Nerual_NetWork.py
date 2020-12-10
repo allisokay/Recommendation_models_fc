@@ -53,7 +53,7 @@ cost=tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=pred,labels=y
 #优化函数：梯度下降minimize优化,学习率为0.001
 op=tf.train.GradientDescentOptimizer(0.001).minimize(cost)
 #正确性预测：想等则返回true,不等则返回false
-corr=tf.equal(tf.argmax(pred,1),tf.argmax(y,1))
+corr=tf.equal(tf.argmax(pred,1),tf.argmax(y,1))#这里的正确性预测直接是从模型开始的，跳过了损失和优化环节
 #准确率预测。把True转换为1，false转换为0，然后相加
 acc=tf.reduce_mean(tf.cast(corr,"float"))#tf.cast将True转换为1.0，false转换为0.0
 #初始化
@@ -71,15 +71,15 @@ for epoch in range(epochs):
         batchXs,batchYs=_mnist.train.next_batch(batch_size)
         feeds={x:batchXs,y:batchYs}
         session.run(op,feed_dict=feeds)
-        avg_cost=session.run(cost,feed_dict=feeds)
+        avg_cost=session.run(cost,feed_dict=feeds)#这里平均损失的计算我想一定要在优化session.run(op,feed_dict={})之后，因为优化后tensorflow自动更新了权重才会使平均损失更小
     avg_cost=avg_cost/total_batch
-    #显示
+    #显示：这里的显示而言，对于测试取出了所有的测试集，对于训练用的是上一步优化训练中的训练集
     if(epoch+1)%display_step==0:
         print("Epoch:%03d/%03d cost:%.9f"%(epoch,epochs,avg_cost))
-        feeds={x:batchXs,y:batchYs}
+        feeds={x:batchXs,y:batchYs}#也明显这是上一步的训练集
         trainAcc=session.run(acc,feed_dict=feeds)
         print("TRAIN ACCURACY:%.3f"%(trainAcc))
-        feeds={x:_mnist.test.images,y:_mnist.test.labels}
+        feeds={x:_mnist.test.images,y:_mnist.test.labels}#明显这是所有的测试集
         testAcc=session.run(acc,feed_dict=feeds)
         print("TEST ACCURACY:%.3f"%(testAcc))
 print("finished")
