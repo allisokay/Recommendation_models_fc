@@ -43,45 +43,40 @@ def conv_basic(_input,_w,_b,_keepRatio):#_keepRation:保持数据信息比拟
     print('第一次卷积再激活后的图片形状：', _conv_relu1.shape)
     #池化层:最大池化
     _conv_pool1=tf.nn.max_pool(_conv_relu1,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME')
-    print('第一次卷积再激活再最大池化后的图片形状：', _conv_relu1.shape)
+    print('第一次卷积再激活再最大池化后的图片形状：', _conv_pool1.shape)
     #使用dropout防止过拟合化,保持比例
     _pool_dr1=tf.nn.dropout(_conv_pool1,_keepRatio)
-    print('第一次卷积再激活再最大池化再剪枝后的图片形状：', _conv_relu1.shape)
+    print('第一次卷积再激活再最大池化再剪枝后的图片形状：', _pool_dr1.shape)
     #卷积层2
     _conv2=tf.nn.conv2d(_pool_dr1,_w.get("wc2"),strides=[1,1,1,1],padding='SAME')
-    print('第二次卷积后的图片形状：', _conv_relu1.shape)
+    print('第二次卷积后的图片形状：', _conv2.shape)
     #激活层2
     _conv_relu2=tf.nn.relu(tf.nn.bias_add(_conv2,_b.get("bc2")))
-    print('第二次卷积再激活后的图片形状：', _conv_relu1.shape)
+    print('第二次卷积再激活后的图片形状：', _conv_relu2.shape)
     #池化层：也是最大池化
     _conv_pool2=tf.nn.max_pool(_conv_relu2,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME')
-    print('第二次卷积再激活再最大池化后的图片形状：', _conv_relu1.shape)
+    print('第二次卷积再激活再最大池化后的图片形状：', _conv_pool2.shape)
     #仍然再使用一个dropout防止过拟合
     _pool_dr2=tf.nn.dropout(_conv_pool2,_keepRatio)
-    print('第二次卷积再激活再最大池化再剪枝后的图片形状：', _conv_relu1.shape)
+    print('第二次卷积再激活再最大池化再剪枝后的图片形状：', _pool_dr2.shape)
 
     #矢量化
     _dense1=tf.reshape(_pool_dr2,[-1,_w.get('wd1').get_shape().as_list()[0]])
-    print('矢量化后的图片形状：', _conv_relu1.shape)
+    print('矢量化后的图片形状：', _dense1.shape)
     #全连接层1 矩阵相乘
     _fc1=tf.nn.relu(tf.add(tf.matmul(_dense1,_w.get('wd1')),_b.get('bd1')))
-    print('全连接后的图片形状：', _conv_relu1.shape)
+    print('全连接后的图片形状：', _fc1.shape)
     #仍然防止过拟合
     _fc_dr1=tf.nn.dropout(_fc1,_keepRatio)
-    print('全连接再剪枝后的图片形状：', _conv_relu1.shape)
+    print('全连接再剪枝后的图片形状：', _fc_dr1.shape)
     # #全连接层2，也是矩阵相乘
     # _fc2=tf.nn.relu(tf.add(tf.matmul(_fc_dr1,_w["wd2"]),_b['bd2']))
     # #继续防止过拟合
     # _fc_dr2=tf.nn.dropout(_fc2,_keepRatio)
 
     #输出层
-    _out=tf.add(tf.matmul(_fc_dr1,_w.get('wd2')),_b.get('bd2'))
-    print('输出的图片形状：', _conv_relu1.shape)
-    out={
-        'input_r':_input_r,'conv1':_conv1,'conv_pool1':_conv_pool1,"pool_dr1":_pool_dr1,
-        'conv2':_conv2,'conv_pool1':_conv_pool2,"pool_dr2":_pool_dr2,
-        'dense':_dense1,'fc1':_fc1,"fc_dr1":_fc_dr1,'out':_out
-    }
+    out=tf.add(tf.matmul(_fc_dr1,_w.get('wd2')),_b.get('bd2'))
+    print('输出的图片形状：', out.shape)
     print("-"*30,"CNN构建完成","-"*30)
     return  out
 
@@ -89,7 +84,7 @@ def conv_basic(_input,_w,_b,_keepRatio):#_keepRation:保持数据信息比拟
 x=tf.placeholder(tf.float32,[None,n_input])#声明float节点
 y=tf.placeholder(tf.float32,[None,n_output])
 keepRatio=tf.placeholder(tf.float32)
-_pred=conv_basic(x,wights,bias,keepRatio)['out']
+_pred=conv_basic(x,wights,bias,keepRatio)
 '''cost和op是为了更新权重矩阵weights和偏置'''
 cost=tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=_pred,labels=y))#softmax:单调增函数
 #Adam优化算法，一个寻求全局最优点的优化算法，引入二次梯度校正
@@ -126,6 +121,6 @@ for epoch in range(epochs):
         print("Epoch:%03d/%03d cost:%9f"%(epoch,epochs,avg_cost))
         train_acc=session.run(accr,feed_dict=feeds)
         print("Trainning accuracy:%.3f "%(train_acc))
-        #test_acc=session.run(accr,feed_dict={x:mnist.test.images,y:mnist.test.labels,keepRatio:1})
-        #print("Test accuracy:%.3f "%(test_acc))
+        test_acc=session.run(accr,feed_dict={x:mnist.test.images,y:mnist.test.labels,keepRatio:1})
+        print("Test accuracy:%.3f "%(test_acc))
 print('程序结束')
