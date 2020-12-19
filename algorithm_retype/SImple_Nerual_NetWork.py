@@ -61,8 +61,8 @@ init=tf.global_variables_initializer()
 session=tf.Session()
 session.run(init)
 #模型训练：
-epochs=100
-batch_size=100
+epochs=1000
+batch_size=1000
 display_step=4#打印次数
 for epoch in range(epochs):
     avg_cost=0#平均误差

@@ -103,7 +103,7 @@ session=tf.Session()
 session.run(init)
 
 #开始训练
-epochs=15
+epochs=100
 batch_size=16
 display_step=1
 for epoch in range(epochs):
@@ -121,6 +121,8 @@ for epoch in range(epochs):
         print("Epoch:%03d/%03d cost:%9f"%(epoch,epochs,avg_cost))
         train_acc=session.run(accr,feed_dict=feeds)
         print("Trainning accuracy:%.3f "%(train_acc))
-        test_acc=session.run(accr,feed_dict={x:mnist.test.images,y:mnist.test.labels,keepRatio:1})
+        testXs,testYs=mnist.test.next_batch(batch_size)
+        test_acc=session.run(accr,feed_dict={x:testXs,y:testYs,keepRatio:1})
+        #test_acc = session.run(accr, feed_dict={x: test_imgs, y: test_imgs, keepRatio: 1})
         print("Test accuracy:%.3f "%(test_acc))
 print('程序结束')
